@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Odpočítávání</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: #fef7ea;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .box {
+      background: white;
+      padding: 32px;
+      border-radius: 20px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+      text-align: center;
+      width: 320px;
+    }
+    .title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      color: #2a2a2a;
+    }
+    .units {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+    }
+    .unit {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 70px;
+    }
+    .num {
+      font-size: 36px;
+      font-weight: 700;
+      color: #222;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .label {
+      font-size: 14px;
+      color: #666;
+    }
+    .fade-enter {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    .fade-enter-active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="title">Vzdrž ještě...</div>
+    <div class="units" id="units"></div>
+  </div>
+
+  <script>
+    const TARGET_DATE = (() => {
+      const d = new Date();
+      d.setDate(2025, 12, 19);
+      d.setHours(17, 0, 0, 0);
+      return d;
+    })();
+
+    const TARGET_MESSAGE = "Dovolená začíná!";
+
+    function plural(n, one, few, many) {
+      if (n === 1) return one;
+      if (n >= 2 && n <= 4) return few;
+      return many;
+    }
+
+    function calcParts(target) {
+      const now = new Date();
+      const total = Math.max(0, target - now);
+      const s = Math.floor(total / 1000);
+      return {
+        total,
+        days: Math.floor(s / 86400),
+        hours: Math.floor((s % 86400) / 3600),
+        minutes: Math.floor((s % 3600) / 60),
+        seconds: s % 60
+      };
+    }
+
+    function getDisplayUnits(p) {
+      const u = [
+        { key: "days", value: p.days, one: "den", few: "dny", many: "dní" },
+        { key: "hours", value: p.hours, one: "hodinu", few: "hodiny", many: "hodin" },
+        { key: "minutes", value: p.minutes, one: "minutu", few: "minuty", many: "minut" },
+        { key: "seconds", value: p.seconds, one: "sekundu", few: "sekundy", many: "sekund" }
+      ];
+
+      const idx = u.findIndex(x => x.value > 0);
+      if (idx === -1) return [u[3]];
+
+      const first = u[idx];
+      const next = u[idx + 1];
+
+      if (next && next.value > 0) return [first, next];
+      return [first];
+    }
+
+    function animateValue(el, newValue) {
+      el.classList.add("fade-enter");
+      requestAnimationFrame(() => {
+        el.classList.add("fade-enter-active");
+      });
+
+      setTimeout(() => {
+        el.textContent = newValue;
+        el.classList.remove("fade-enter", "fade-enter-active");
+      }, 180);
+    }
+
+    const unitsEl = document.getElementById("units");
+
+    function render() {
+      const parts = calcParts(TARGET_DATE);
+      const reached = parts.total <= 0;
+
+      if (reached) {
+        unitsEl.innerHTML = `<div class="unit"><div class="num">${TARGET_MESSAGE}</div></div>`;
+        return;
+      }
+
+      const display = getDisplayUnits(parts);
+      unitsEl.innerHTML = "";
+
+      display.forEach(u => {
+        const div = document.createElement("div");
+        div.className = "unit";
+        div.innerHTML = `
+          <div class="num" id="num-${u.key}">${u.value}</div>
+          <div class="label">${plural(u.value, u.one, u.few, u.many)}</div>
+        `;
+        unitsEl.appendChild(div);
+      });
+    }
+
+    function tick() {
+      const parts = calcParts(TARGET_DATE);
+      const display = getDisplayUnits(parts);
+
+      if (parts.total <= 0) return render();
+
+      display.forEach(u => {
+        const el = document.getElementById(`num-${u.key}`);
+        if (el && el.textContent != u.value) animateValue(el, u.value);
+      });
+    }
+
+    render();
+    setInterval(tick, 1000);
+  </script>
+</body>
+</html>
