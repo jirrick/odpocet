@@ -66,12 +66,7 @@
   </div>
 
   <script>
-    const TARGET_DATE = (() => {
-      const d = new Date();
-      d.setDate(2025, 12, 19);
-      d.setHours(17, 0, 0, 0);
-      return d;
-    })();
+    const TARGET_DATE = new Date(2025, 12, 19, 17, 0, 0);
 
     const TARGET_MESSAGE = "Dovolená začíná!";
 
