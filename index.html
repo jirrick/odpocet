@@ -167,7 +167,7 @@
         const numEl = document.getElementById(`num-${u.key}`);
         const labelEl = document.getElementById(`label-${u.key}`);
         
-        if (numEl && numEl.textContent != u.value) {
+        if (numEl && numEl.textContent !== String(u.value)) {
           animateValue(numEl, u.value);
         }
         
