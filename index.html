@@ -35,9 +35,9 @@
     }
     .unit {
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-width: 70px;
+      flex-direction: row;
+      align-items: baseline;
+      gap: 8px;
     }
     .num {
       font-size: 36px;
@@ -120,6 +120,7 @@
     }
 
     const unitsEl = document.getElementById("units");
+    let lastDisplayKeys = [];
 
     function render() {
       const parts = calcParts(TARGET_DATE);
@@ -127,10 +128,12 @@
 
       if (reached) {
         unitsEl.innerHTML = `<div class="unit"><div class="num">${TARGET_MESSAGE}</div></div>`;
+        lastDisplayKeys = [];
         return;
       }
 
       const display = getDisplayUnits(parts);
+      lastDisplayKeys = display.map(u => u.key);
       unitsEl.innerHTML = "";
 
       display.forEach(u => {
@@ -138,7 +141,7 @@
         div.className = "unit";
         div.innerHTML = `
           <div class="num" id="num-${u.key}">${u.value}</div>
-          <div class="label">${plural(u.value, u.one, u.few, u.many)}</div>
+          <div class="label" id="label-${u.key}">${plural(u.value, u.one, u.few, u.many)}</div>
         `;
         unitsEl.appendChild(div);
       });
@@ -150,9 +153,30 @@
 
       if (parts.total <= 0) return render();
 
+      // Check if the structure changed (different units are displayed)
+      const currentKeys = display.map(u => u.key);
+      const structureChanged = currentKeys.length !== lastDisplayKeys.length ||
+                                currentKeys.some((k, i) => k !== lastDisplayKeys[i]);
+
+      if (structureChanged) {
+        return render();
+      }
+
+      // Update values and labels
       display.forEach(u => {
-        const el = document.getElementById(`num-${u.key}`);
-        if (el && el.textContent != u.value) animateValue(el, u.value);
+        const numEl = document.getElementById(`num-${u.key}`);
+        const labelEl = document.getElementById(`label-${u.key}`);
+        
+        if (numEl && numEl.textContent !== String(u.value)) {
+          animateValue(numEl, u.value);
+        }
+        
+        if (labelEl) {
+          const newLabel = plural(u.value, u.one, u.few, u.many);
+          if (labelEl.textContent !== newLabel) {
+            labelEl.textContent = newLabel;
+          }
+        }
       });
     }
 
